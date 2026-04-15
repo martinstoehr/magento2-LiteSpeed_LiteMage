@@ -66,7 +66,7 @@ class FlushCacheByCli implements \Magento\Framework\Event\ObserverInterface
      */
     function __destruct()
     {
-        $this->sendPurgeRequest();
+        $this->sendPurgeRequest(true);
     }
     
 	/**
@@ -89,15 +89,16 @@ class FlushCacheByCli implements \Magento\Framework\Event\ObserverInterface
         // remaining will be handled by destructor
 	}
     
-    private function sendPurgeRequest()
+    private function sendPurgeRequest($force = false)
     {
-        while ($this->cachePurge->getPurgeTagsCount() >= self::BATCH_SIZE) {
-            $tags = $this->cachePurge->grabPurgeTags(self::BATCH_SIZE);
-    		$list = array_chunk($tags, self::BATCH_SIZE); // split to avoid url too long
-            foreach ($list as $l) {
-                $this->_shellPurge(['tags' => implode(',', $l)]);
+        while (($count = $this->cachePurge->getPurgeTagsCount()) > 0) {
+            if (!$force && $count < self::BATCH_SIZE) {
+                break;
             }
-		}
+            $limit = min($count, self::BATCH_SIZE);
+            $tags = $this->cachePurge->grabPurgeTags($limit);
+            $this->_shellPurge(['tags' => implode(',', $tags)]);
+        }
     }
 
 	private function _shellPurge($params)
@@ -156,7 +157,7 @@ class FlushCacheByCli implements \Magento\Framework\Event\ObserverInterface
 
             $server_ip = $this->config->getServerIp();
             $storeId = $this->config->getFrontStoreId();
-            $base = $this->url->getUrl('litemage/shell/purge', ['_scope' => $storeId, '_nosid' => true]);
+            $base = $this->url->getUrl('litemage/cli/purge', ['_scope' => $storeId, '_nosid' => true]);
             if ($server_ip) {
                 $pattern = "/:\/\/([^\/^:]+)(\/|:)?/";
                 if (preg_match($pattern, $base, $m)) {

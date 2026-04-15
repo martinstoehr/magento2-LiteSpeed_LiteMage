@@ -6,8 +6,7 @@
  * @copyright  Copyright (c) LiteSpeed Technologies, Inc. All rights reserved. (https://www.litespeedtech.com)
  * @license     https://opensource.org/licenses/GPL-3.0
  */
-
-namespace Litespeed\Litemage\Controller\Shell;
+namespace Litespeed\Litemage\Controller\Cli;
 
 class Purge extends \Magento\Framework\App\Action\Action
 {
@@ -81,7 +80,7 @@ class Purge extends \Magento\Framework\App\Action\Action
         $req = $this->getRequest();
         $secret = $req->getParam('secret');
 
-        if (strlen($secret) != 32) {
+        if (strlen((string)$secret) != 32) {
             return 'Invalid request';
         }
         $file = dirname(dirname(dirname(__FILE__))) . '/Observer/FlushCacheByCli.php';
@@ -113,7 +112,7 @@ class Purge extends \Magento\Framework\App\Action\Action
         $resp = $this->getResponse();
         $resp->setHttpResponseCode(500);
         $resp->setBody($errorMesg);
-        $this->helper->debugLog('litemage/shell/purge ErrorExit: ' . $errorMesg);
+        $this->helper->debugLog('litemage/cli/purge ErrorExit: ' . $errorMesg);
     }
 
 }
